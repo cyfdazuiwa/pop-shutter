@@ -75,3 +75,17 @@ PopApp.forceCapture()   // 手动触发一次抓拍
 PopApp.photos           // 当前照片列表
 PopApp.state            // 运行状态（指数、阈值、episode 等）
 ```
+
+## 版本管理
+
+仓库：<https://github.com/cyfdazuiwa/pop-shutter>
+
+```bash
+git add -A && git commit -m "feat: 说明你的改动"
+git push                 # 推送 main 分支
+git tag -a v1.1.0 -m "版本说明" && git push origin v1.1.0   # 发新版本
+```
+
+版本号建议遵循语义化：改功能升次版本（v1.1 → v1.2），仅修复升补丁（v1.1.0 → v1.1.1）。
+
+> 注意：修改 `js/app.js` 或 `css/style.css` 后，记得同步递增 `index.html` 里的 `?v=N` 版本参数，避免浏览器使用旧缓存。
