@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>波普快门 POP SHUTTER · 焦躁指数波普肖像机</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+<link rel="stylesheet" href="css/style.css?v=7">
+</head>
+<body>
+
+<!-- ============ 开场页 ============ -->
+<section id="landing">
+  <div class="landing-inner">
+    <div class="landing-copy">
+      <div class="badge-pop">POP ART · LIVE PORTRAIT MACHINE</div>
+      <h1>波普<em>快门</em><span class="bang">POP!</span></h1>
+      <p class="sub">对着镜头晃一晃、做个鬼脸——当<b>「焦躁指数」</b>冲过红线，快门自动落下，你的安迪·沃霍尔式 20 宫格肖像立刻入册。</p>
+      <button id="startBtn" class="btn-pop btn-xl">📷 开启摄像头，生成你的波普肖像</button>
+      <ul class="steps">
+        <li><b>1</b>点开始</li>
+        <li><b>2</b>对镜头玩</li>
+        <li><b>3</b>其余全自动</li>
+      </ul>
+      <p class="privacy">🔒 全程在浏览器本地处理 · 画面与照片不会上传任何服务器</p>
+    </div>
+    <div class="landing-hero">
+      <div class="halftone"></div>
+      <figure class="polaroid">
+        <img src="assets/hero.jpg" alt="波普艺术风格示例：同一人像的彩色宫格" onerror="this.parentElement.classList.add('noimg')">
+        <div class="ph-fallback" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <figcaption>Own your restless face.</figcaption>
+      </figure>
+      <div class="star star-1" aria-hidden="true">✦</div>
+      <div class="star star-2" aria-hidden="true">✦</div>
+      <div class="dot dot-1" aria-hidden="true"></div>
+    </div>
+  </div>
+  <footer class="landing-foot">getUserMedia + face-api.js + Canvas · 纯前端实现 · 照片仅存于本浏览器</footer>
+</section>
+
+<!-- ============ 应用页 ============ -->
+<main id="app" hidden>
+  <section id="stage">
+    <div id="canvasWrap" class="pframe frame-polaroid">
+      <div id="canvasHolder">
+        <canvas id="popCanvas" width="891" height="1386"></canvas>
+        <div id="flash" aria-hidden="true"></div>
+      </div>
+      <div id="frameBand" aria-hidden="true">
+        <div class="fb-text">
+          <span id="bandCaption">Own your restless face.</span>
+          <span id="bandDate"></span>
+        </div>
+        <span id="bandStamp"><i>焦躁指数</i><b id="bandStampVal">0</b></span>
+      </div>
+    </div>
+    <button id="shutterBtn" class="shutter" title="手动拍摄" aria-label="手动拍摄">
+      <i></i>
+    </button>
+
+    <!-- 摄像头权限引导卡 -->
+    <div id="permCard" class="card perm-card" hidden>
+      <div class="perm-icon" id="permIcon">🚫</div>
+      <h3 id="permTitle">未获得摄像头权限</h3>
+      <p id="permText">请在浏览器地址栏允许摄像头权限后重试</p>
+      <div class="perm-actions">
+        <button id="retryBtn" class="btn-pop btn-sm">重试</button>
+        <button id="backBtn" class="btn-ghost btn-sm">返回首页</button>
+      </div>
+    </div>
+  </section>
+
+  <aside id="panel">
+    <header class="panel-head">
+      <div class="logo">波普快门<span>POP SHUTTER</span></div>
+      <div id="faceStatus" class="status"><i class="dot loading"></i><span>正在准备…</span></div>
+    </header>
+
+    <div class="card gauge-card">
+      <div class="gauge">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="track" cx="100" cy="100" r="84"/>
+          <circle id="gaugeArc" class="arc" cx="100" cy="100" r="84"/>
+          <g id="thTick"><rect x="96.5" y="3" width="7" height="20" rx="3.5"/></g>
+        </svg>
+        <div class="gauge-center">
+          <div id="idxNum">0</div>
+          <div id="idxWord">平静 😌</div>
+        </div>
+      </div>
+      <div class="gauge-hint">快速晃头、瞪眼、做鬼脸，都会推高指数</div>
+      <div id="shotStatus" class="shot-status">自动抓拍待命中</div>
+    </div>
+
+    <div class="card threshold-card">
+      <label for="thSlider">触发阈值<b id="thVal">80</b></label>
+      <input id="thSlider" type="range" min="0" max="100" step="1" value="80">
+      <div class="th-labels"><span>0 · 更灵敏</span><span>100 · 更迟钝</span></div>
+    </div>
+
+    <section class="card accordion open" id="artCard">
+      <button type="button" class="acc-head" aria-expanded="true">
+        画面风格<span class="style-sub">宫格 · 波普 · 色系</span><i class="acc-arrow">▾</i>
+      </button>
+      <div class="acc-body">
+        <div class="acc-inner art-body">
+          <div class="art-row">
+            <span class="art-label">宫格</span>
+            <div class="chipset">
+              <button type="button" class="chip-sel" data-grid="g9">3×3 · 9</button>
+              <button type="button" class="chip-sel active" data-grid="g20">4×5 · 20</button>
+              <button type="button" class="chip-sel" data-grid="g30">5×6 · 30</button>
+            </div>
+          </div>
+          <div class="art-row">
+            <span class="art-label">风格</span>
+            <div class="chipset">
+              <button type="button" class="chip-sel active" data-mode="classic">套色经典</button>
+              <button type="button" class="chip-sel" data-mode="hue">原彩波普</button>
+            </div>
+          </div>
+          <div class="art-row" id="paletteRow">
+            <span class="art-label">色系</span>
+            <div class="chipset">
+              <button type="button" class="chip-sel active" data-set="warhol">沃霍尔</button>
+              <button type="button" class="chip-sel" data-set="neon">霓虹</button>
+              <button type="button" class="chip-sel" data-set="candy">糖果</button>
+              <button type="button" class="chip-sel" data-set="mono">黑白</button>
+              <button type="button" class="chip-sel" data-set="custom">自定义</button>
+            </div>
+          </div>
+          <div class="art-row" id="customColors" hidden>
+            <span class="art-label">颜色</span>
+            <div class="colorpickers">
+              <label>亮部<input type="color" id="cLight" value="#ffd23f"></label>
+              <label>中间<input type="color" id="cMid" value="#f2384a"></label>
+              <label>暗部<input type="color" id="cDark" value="#161238"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card accordion" id="photoStyleCard">
+      <button type="button" class="acc-head" aria-expanded="false">
+        照片样式<span class="style-sub">边框 · 标注 · 焦躁值</span><i class="acc-arrow">▾</i>
+      </button>
+      <div class="acc-body">
+        <div class="acc-inner style-body">
+          <canvas id="stylePreview" width="240" height="400" aria-label="照片样式预览"></canvas>
+          <div class="style-controls">
+            <div class="style-frames" role="radiogroup" aria-label="边框风格">
+              <button type="button" class="frame-opt active" data-frame="polaroid">拍立得</button>
+              <button type="button" class="frame-opt" data-frame="ink">暗房</button>
+              <button type="button" class="frame-opt" data-frame="minimal">极简</button>
+            </div>
+            <input id="capInput" type="text" maxlength="24" placeholder="标注一句话…" value="Own your restless face.">
+            <div class="style-toggles">
+              <label class="chip"><input id="optIdx" type="checkbox" checked>焦躁值</label>
+              <label class="chip"><input id="optDate" type="checkbox" checked>日期</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="gallery-head">
+      <h2>待选区 <span id="phCount" class="count">0</span></h2>
+      <span id="undoneBadge" class="badge-warn" hidden></span>
+    </div>
+    <div id="gallery">
+      <div id="emptyHint" class="empty">还没有照片<br><small>把焦躁指数晃过阈值，快门会自动落下</small></div>
+    </div>
+
+    <footer class="panel-foot">
+      <button id="zipBtn" class="btn-pop btn-sm" disabled>⬇ 全部下载 ZIP</button>
+      <button id="clearBtn" class="btn-ghost btn-sm" disabled>清空</button>
+    </footer>
+  </aside>
+</main>
+
+<!-- ============ 大图预览 ============ -->
+<div id="lightbox" hidden role="dialog" aria-modal="true" aria-label="照片预览">
+  <div class="lb-backdrop" id="lbBackdrop"></div>
+  <figure class="lb-body">
+    <img id="lbImg" alt="波普肖像预览">
+    <figcaption id="lbMeta"></figcaption>
+    <div class="lb-actions">
+      <button id="lbDl" class="btn-pop btn-sm">⬇ 下载</button>
+      <button id="lbDel" class="btn-ghost btn-sm">🗑 删除</button>
+      <button id="lbClose" class="btn-ghost btn-sm">关闭</button>
+    </div>
+  </figure>
+</div>
+
+<div id="toast" role="status"></div>
+
+<video id="cam" playsinline muted class="offscreen"></video>
+<canvas id="proc" width="216" height="270" hidden></canvas>
+<canvas id="det" width="288" height="360" hidden></canvas>
+
+<script src="js/vendor/face-api.min.js"></script>
+<script>if(!window.faceapi)document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"><\/scr'+'ipt>')</script>
+<script src="js/vendor/jszip.min.js"></script>
+<script>if(!window.JSZip)document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"><\/scr'+'ipt>')</script>
+<script>window.addEventListener('error',function(e){(window.__errs=window.__errs||[]).push((e.message||'?')+' @'+(e.lineno||'?'));});</script>
+<script src="js/app.js?v=7"></script>
+</body>
+</html>
